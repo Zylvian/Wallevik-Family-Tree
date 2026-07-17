@@ -1,4 +1,4 @@
-import { cpSync, mkdirSync, readdirSync, rmSync, statSync } from 'node:fs'
+import { cpSync, mkdirSync, readdirSync, rmSync, statSync, writeFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
@@ -30,5 +30,6 @@ function copyDir(src, dest) {
 
 removeRootArtifacts()
 copyDir(distDir, repoRoot)
+writeFileSync(join(repoRoot, '.nojekyll'), '')
 
 console.log('Deployed build to repo root')

@@ -37,9 +37,6 @@ jobs:
           VITE_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.VITE_SUPABASE_PUBLISHABLE_KEY || secrets.VITE_SUPABASE_ANON_KEY || 'sb_publishable_W93shqL1kyyAlR8rlbJYCw_HXaXy-kI' }}
         run: npm run build
 
-      - name: Add .nojekyll
-        run: touch .nojekyll
-
       - name: Commit built site
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
