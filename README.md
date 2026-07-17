@@ -2,9 +2,16 @@
 
 An interactive family tree website that visualizes your lineage as a zoomable, panable tree graph. Each person appears as a named bubble on the tree — click any node to see full details.
 
-**Live site:** [https://zylvian.github.io/Wallevik-Family-Tree/](https://zylvian.github.io/Wallevik-Family-Tree/)
+## Deployment
 
-## Features
+The built site lives in `docs/` on `main`. GitHub Actions rebuilds it automatically whenever source files change.
+
+**GitHub Pages settings:**
+1. Go to **Settings → Pages**
+2. Source: **Deploy from a branch**
+3. Branch: **`main`**, folder: **`/docs`**
+
+**Live site:** [https://zylvian.github.io/Wallevik-Family-Tree/](https://zylvian.github.io/Wallevik-Family-Tree/)
 
 - **Interactive tree graph** — zoom (scroll), pan (drag), and click nodes for details
 - **Literal tree design** — nodes sit on branches above decorative tree trunks
@@ -36,18 +43,10 @@ npm run dev
 ## Build
 
 ```bash
-npm run build
+npm run build   # outputs to docs/
 ```
 
-## Deployment
-
-The site deploys automatically to GitHub Pages on push to `main` via GitHub Actions.
-
-To enable GitHub Pages:
-1. Go to **Settings → Pages**
-2. Under **Build and deployment**, set Source to **GitHub Actions**
-
-## Data persistence
+## Features
 
 Edits made in the browser are saved to `localStorage` so they survive page reloads. Use **Export** to download JSON, then commit the file to update the canonical data in the repo.
 
