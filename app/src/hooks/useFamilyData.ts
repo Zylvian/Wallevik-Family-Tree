@@ -1,83 +1,94 @@
 import { useCallback, useEffect, useState } from 'react'
 import type { Person, PersonInput } from '../types/person'
 import { generateId } from '../utils/treeBuilder'
+import {
+  deletePersonFromDb,
+  fetchAllPeople,
+  insertPerson,
+  isSupabaseConfigured,
+  updatePersonInDb,
+} from '../lib/supabase'
 
-const STORAGE_KEY = 'wallevik-family-tree-data'
-
-async function fetchServerData(): Promise<Person[]> {
+async function fetchFallbackData(): Promise<Person[]> {
   const response = await fetch(`${import.meta.env.BASE_URL}data/family.json`)
   if (!response.ok) throw new Error('Failed to load family data')
   return response.json() as Promise<Person[]>
-}
-
-async function loadInitialData(): Promise<Person[]> {
-  const serverData = await fetchServerData()
-
-  const stored = localStorage.getItem(STORAGE_KEY)
-  if (!stored) return serverData
-
-  try {
-    const localData = JSON.parse(stored) as Person[]
-    const serverIds = new Set(serverData.map((p) => p.id))
-    const localOnly = localData.filter((p) => !serverIds.has(p.id))
-    return [...serverData, ...localOnly]
-  } catch {
-    localStorage.removeItem(STORAGE_KEY)
-    return serverData
-  }
 }
 
 export function useFamilyData() {
   const [people, setPeople] = useState<Person[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [saving, setSaving] = useState(false)
+
+  const loadPeople = useCallback(async () => {
+    setLoading(true)
+    setError(null)
+    try {
+      const data = isSupabaseConfigured ? await fetchAllPeople() : await fetchFallbackData()
+      setPeople(data)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load family data')
+    } finally {
+      setLoading(false)
+    }
+  }, [])
 
   useEffect(() => {
-    loadInitialData()
-      .then(setPeople)
-      .catch((err: Error) => setError(err.message))
-      .finally(() => setLoading(false))
-  }, [])
-
-  const persist = useCallback((next: Person[]) => {
-    setPeople(next)
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(next, null, 2))
-  }, [])
+    loadPeople()
+  }, [loadPeople])
 
   const addPerson = useCallback(
-    (input: PersonInput) => {
-      const existingIds = new Set(people.map((p) => p.id))
-      const id = input.id ?? generateId(input.name, existingIds)
-      const person: Person = { ...input, id, name: input.name.trim() }
-      persist([...people, person])
+    async (input: PersonInput): Promise<Person> => {
+      if (!isSupabaseConfigured) {
+        throw new Error('Database not configured — see README for Supabase setup')
+      }
+
+      setSaving(true)
+      try {
+        const existingIds = new Set(people.map((p) => p.id))
+        const id = input.id ?? generateId(input.name, existingIds)
+        const person = await insertPerson({ ...input, id })
+        setPeople((prev) => [...prev, person])
+        return person
+      } finally {
+        setSaving(false)
+      }
+    },
+    [people]
+  )
+
+  const updatePerson = useCallback(async (id: string, input: PersonInput): Promise<Person> => {
+    if (!isSupabaseConfigured) {
+      throw new Error('Database not configured — see README for Supabase setup')
+    }
+
+    setSaving(true)
+    try {
+      const person = await updatePersonInDb(id, { ...input, id })
+      setPeople((prev) => prev.map((p) => (p.id === id ? person : p)))
       return person
-    },
-    [people, persist]
-  )
+    } finally {
+      setSaving(false)
+    }
+  }, [])
 
-  const updatePerson = useCallback(
-    (id: string, input: PersonInput) => {
-      const next = people.map((p) =>
-        p.id === id ? { ...p, ...input, id, name: input.name.trim() } : p
+  const deletePerson = useCallback(async (id: string): Promise<void> => {
+    if (!isSupabaseConfigured) {
+      throw new Error('Database not configured — see README for Supabase setup')
+    }
+
+    setSaving(true)
+    try {
+      await deletePersonFromDb(id)
+      setPeople((prev) =>
+        prev
+          .filter((p) => p.id !== id)
+          .map((p) => (p.parentId === id ? { ...p, parentId: null } : p))
       )
-      persist(next)
-    },
-    [people, persist]
-  )
-
-  const deletePerson = useCallback(
-    (id: string) => {
-      const next = people
-        .filter((p) => p.id !== id)
-        .map((p) => (p.parentId === id ? { ...p, parentId: null } : p))
-      persist(next)
-    },
-    [people, persist]
-  )
-
-  const resetToFile = useCallback(async () => {
-    localStorage.removeItem(STORAGE_KEY)
-    setPeople(await fetchServerData())
+    } finally {
+      setSaving(false)
+    }
   }, [])
 
   const exportJson = useCallback(() => {
@@ -94,10 +105,12 @@ export function useFamilyData() {
     people,
     loading,
     error,
+    saving,
+    isSupabaseConfigured,
     addPerson,
     updatePerson,
     deletePerson,
-    resetToFile,
+    refresh: loadPeople,
     exportJson,
   }
 }

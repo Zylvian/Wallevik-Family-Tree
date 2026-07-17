@@ -8,26 +8,42 @@ import type { Person, PersonInput } from './types/person'
 type View = 'tree' | 'editor'
 
 function App() {
-  const { people, loading, error, addPerson, updatePerson, deletePerson, resetToFile, exportJson } =
-    useFamilyData()
+  const {
+    people,
+    loading,
+    error,
+    saving,
+    isSupabaseConfigured,
+    addPerson,
+    updatePerson,
+    deletePerson,
+    refresh,
+    exportJson,
+  } = useFamilyData()
 
   const [view, setView] = useState<View>('tree')
   const [selectedPerson, setSelectedPerson] = useState<Person | null>(null)
   const [editingPerson, setEditingPerson] = useState<Person | null>(null)
+  const [saveError, setSaveError] = useState<string | null>(null)
 
   const handleSelect = useCallback((person: Person) => {
     setSelectedPerson(person)
   }, [])
 
   const handleSave = useCallback(
-    (input: PersonInput, id?: string) => {
-      if (id) {
-        updatePerson(id, input)
-        setEditingPerson(null)
-        setSelectedPerson(null)
-      } else {
-        const person = addPerson(input)
-        setSelectedPerson(person)
+    async (input: PersonInput, id?: string) => {
+      setSaveError(null)
+      try {
+        if (id) {
+          await updatePerson(id, input)
+          setEditingPerson(null)
+          setSelectedPerson(null)
+        } else {
+          const person = await addPerson(input)
+          setSelectedPerson(person)
+        }
+      } catch (err) {
+        setSaveError(err instanceof Error ? err.message : 'Failed to save')
       }
     },
     [addPerson, updatePerson]
@@ -40,11 +56,15 @@ function App() {
   }, [])
 
   const handleDelete = useCallback(
-    (id: string) => {
-      if (confirm('Delete this person? Children will become root nodes.')) {
-        deletePerson(id)
+    async (id: string) => {
+      if (!confirm('Delete this person? Children will become root nodes.')) return
+      setSaveError(null)
+      try {
+        await deletePerson(id)
         setEditingPerson(null)
         setSelectedPerson(null)
+      } catch (err) {
+        setSaveError(err instanceof Error ? err.message : 'Failed to delete')
       }
     },
     [deletePerson]
@@ -63,18 +83,32 @@ function App() {
     return (
       <div className="app-error">
         <p>Failed to load family data: {error}</p>
+        <button className="btn btn-primary" onClick={refresh}>
+          Retry
+        </button>
       </div>
     )
   }
 
   return (
     <div className="app">
+      {!isSupabaseConfigured && (
+        <div className="config-banner">
+          Database not connected — showing read-only data from file. Editor saves require Supabase
+          setup (see README).
+        </div>
+      )}
+
       <header className="app-header">
         <div className="header-brand">
           <span className="header-icon">🌳</span>
           <div>
             <h1>Wallevik Family Tree</h1>
-            <p className="header-subtitle">{people.length} family members</p>
+            <p className="header-subtitle">
+              {people.length} family members
+              {isSupabaseConfigured && ' · synced to database'}
+              {saving && ' · saving…'}
+            </p>
           </div>
         </div>
         <nav className="header-nav">
@@ -89,6 +123,7 @@ function App() {
             onClick={() => {
               setView('editor')
               setEditingPerson(null)
+              setSaveError(null)
             }}
           >
             Editor
@@ -96,19 +131,13 @@ function App() {
           <button className="nav-btn" onClick={exportJson} title="Download JSON">
             Export
           </button>
-          <button
-            className="nav-btn"
-            onClick={() => {
-              if (confirm('Reset to the original file data? Local edits will be lost.')) {
-                resetToFile()
-              }
-            }}
-            title="Reset to file"
-          >
-            Reset
+          <button className="nav-btn" onClick={refresh} title="Refresh from database">
+            Refresh
           </button>
         </nav>
       </header>
+
+      {saveError && <div className="save-error-banner">{saveError}</div>}
 
       <main className="app-main">
         {view === 'tree' ? (
@@ -122,8 +151,12 @@ function App() {
             <PersonEditor
               people={people}
               editingPerson={editingPerson}
+              saving={saving}
               onSave={handleSave}
-              onCancel={() => setEditingPerson(null)}
+              onCancel={() => {
+                setEditingPerson(null)
+                setSaveError(null)
+              }}
               onDelete={handleDelete}
             />
             <aside className="editor-sidebar">

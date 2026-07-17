@@ -5,9 +5,10 @@ import { validatePerson } from '../utils/treeBuilder'
 interface PersonEditorProps {
   people: Person[]
   editingPerson: Person | null
-  onSave: (input: PersonInput, id?: string) => void
+  saving?: boolean
+  onSave: (input: PersonInput, id?: string) => void | Promise<void>
   onCancel: () => void
-  onDelete?: (id: string) => void
+  onDelete?: (id: string) => void | Promise<void>
 }
 
 const emptyForm: PersonInput = {
@@ -20,6 +21,7 @@ const emptyForm: PersonInput = {
 export function PersonEditor({
   people,
   editingPerson,
+  saving = false,
   onSave,
   onCancel,
   onDelete,
@@ -45,16 +47,20 @@ export function PersonEditor({
     .filter((p) => p.id !== editingPerson?.id)
     .sort((a, b) => a.name.localeCompare(b.name))
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     const validationError = validatePerson(form, people, editingPerson?.id)
     if (validationError) {
       setError(validationError)
       return
     }
-    onSave(form, editingPerson?.id)
-    if (!editingPerson) setForm(emptyForm)
-    setError(null)
+    try {
+      await onSave(form, editingPerson?.id)
+      if (!editingPerson) setForm(emptyForm)
+      setError(null)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to save')
+    }
   }
 
   return (
@@ -131,8 +137,8 @@ export function PersonEditor({
                 Cancel
               </button>
             )}
-            <button type="submit" className="btn btn-primary">
-              {editingPerson ? 'Save changes' : 'Add person'}
+            <button type="submit" className="btn btn-primary" disabled={saving}>
+              {saving ? 'Saving…' : editingPerson ? 'Save changes' : 'Add person'}
             </button>
           </div>
         </div>

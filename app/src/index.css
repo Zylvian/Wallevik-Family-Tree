@@ -114,6 +114,34 @@ body {
   position: relative;
 }
 
+.config-banner,
+.save-error-banner {
+  padding: 0.6rem 1.5rem;
+  font-size: 0.875rem;
+  text-align: center;
+}
+
+.config-banner {
+  background: #fff3cd;
+  color: #664d03;
+  border-bottom: 1px solid #ffc107;
+}
+
+.save-error-banner {
+  background: #f8d7da;
+  color: #842029;
+  border-bottom: 1px solid #f5c2c7;
+}
+
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.app-error .btn {
+  margin-top: 0.5rem;
+}
+
 /* Tree visualization */
 .tree-container {
   width: 100%;
