@@ -19,5 +19,19 @@
     "birthYear": 1998,
     "deathDate": null,
     "parentId": "stein-gunnar-wallevik"
+  },
+  {
+    "id": "ingrid-hjellvik-wallevik",
+    "name": "Ingrid Hjellvik Wallevik",
+    "birthYear": 1999,
+    "deathDate": null,
+    "parentId": "stein-gunnar-wallevik"
+  },
+  {
+    "id": "heidi-wallevik",
+    "name": "Heidi Wallevik",
+    "birthYear": 1960,
+    "deathDate": null,
+    "parentId": "gunnvald-wallevik"
   }
 ]
