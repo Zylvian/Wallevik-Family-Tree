@@ -7,7 +7,11 @@ import type { Person, PersonInput } from './types/person'
 
 type View = 'tree' | 'editor'
 
-function App() {
+interface AppProps {
+  onLogout: () => void
+}
+
+function App({ onLogout }: AppProps) {
   const {
     people,
     loading,
@@ -92,13 +96,6 @@ function App() {
 
   return (
     <div className="app">
-      {!isSupabaseConfigured && (
-        <div className="config-banner">
-          Database not connected — showing read-only data from file. Editor saves require Supabase
-          setup (see README).
-        </div>
-      )}
-
       <header className="app-header">
         <div className="header-brand">
           <span className="header-icon">🌳</span>
@@ -133,6 +130,9 @@ function App() {
           </button>
           <button className="nav-btn" onClick={refresh} title="Refresh from database">
             Refresh
+          </button>
+          <button className="nav-btn" onClick={onLogout} title="Sign out">
+            Log out
           </button>
         </nav>
       </header>

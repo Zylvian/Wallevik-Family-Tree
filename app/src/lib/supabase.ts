@@ -14,7 +14,8 @@ const supabaseUrl =
   'https://kzkzmpqbheeaeoytgera.supabase.co'
 const supabaseAnonKey =
   (import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string | undefined) ??
-  (import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined)
+  (import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined) ??
+  'sb_publishable_W93shqL1kyyAlR8rlbJYCw_HXaXy-kI'
 
 export const isSupabaseConfigured = Boolean(supabaseUrl && supabaseAnonKey)
 
