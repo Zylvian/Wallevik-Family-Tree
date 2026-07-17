@@ -5,7 +5,7 @@ export default defineConfig({
   plugins: [react()],
   base: '/Wallevik-Family-Tree/',
   build: {
-    outDir: '../',
-    emptyOutDir: false,
+    outDir: 'dist',
+    emptyOutDir: true,
   },
 })
