@@ -44,12 +44,15 @@ npm run dev
 
 ### 5. Configure GitHub Pages deploy
 
-Add two repository secrets (**Settings → Secrets and variables → Actions**):
+Add repository secrets (**Settings → Secrets and variables → Actions**):
 
 | Secret | Value |
 |--------|-------|
-| `VITE_SUPABASE_URL` | Your Project URL |
-| `VITE_SUPABASE_ANON_KEY` | Your anon public key |
+| `VITE_SUPABASE_PUBLISHABLE_KEY` | Your **publishable** key (`sb_publishable_...`) from **Settings → API Keys** |
+
+The project URL is already configured. You do **not** need the secret key (`sb_secret_...`) in the app — that must never go in frontend code.
+
+> **Important:** Use the **publishable** key, not the secret key. The secret key only works in server-side code and will not work in the browser.
 
 Push to `main` (or re-run the **Build site to repo root** workflow) to rebuild with the database connected.
 
