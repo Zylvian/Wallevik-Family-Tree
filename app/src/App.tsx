@@ -2,10 +2,11 @@ import { useCallback, useState } from 'react'
 import { FamilyTree } from './components/FamilyTree'
 import { PersonDetail } from './components/PersonDetail'
 import { PersonEditor } from './components/PersonEditor'
+import { RelationshipLookup } from './components/RelationshipLookup'
 import { useFamilyData } from './hooks/useFamilyData'
 import type { Person, PersonInput } from './types/person'
 
-type View = 'tree' | 'editor'
+type View = 'tree' | 'editor' | 'relations'
 
 interface AppProps {
   onLogout: () => void
@@ -125,6 +126,12 @@ function App({ onLogout }: AppProps) {
           >
             Editor
           </button>
+          <button
+            className={`nav-btn ${view === 'relations' ? 'active' : ''}`}
+            onClick={() => setView('relations')}
+          >
+            Relations
+          </button>
           <button className="nav-btn" onClick={exportJson} title="Download JSON">
             Export
           </button>
@@ -146,6 +153,8 @@ function App({ onLogout }: AppProps) {
             selectedId={selectedPerson?.id ?? null}
             onSelect={handleSelect}
           />
+        ) : view === 'relations' ? (
+          <RelationshipLookup people={people} />
         ) : (
           <div className="editor-layout">
             <PersonEditor

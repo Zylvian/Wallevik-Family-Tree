@@ -223,6 +223,116 @@ body {
   padding: 0.7rem;
 }
 
+.generation-band {
+  fill: rgba(255, 253, 248, 0.55);
+}
+
+.generation-band:nth-child(4n + 1) {
+  fill: rgba(232, 240, 228, 0.7);
+}
+
+.generation-divider {
+  stroke: var(--color-bark);
+  stroke-width: 1.5px;
+  stroke-dasharray: 8 6;
+  opacity: 0.45;
+}
+
+.generation-label {
+  font-family: var(--font-serif);
+  font-size: 15px;
+  font-weight: 600;
+  fill: var(--color-text);
+}
+
+.generation-sublabel {
+  font-family: var(--font-sans);
+  font-size: 11px;
+  fill: var(--color-text-muted);
+}
+
+/* Relationship lookup */
+.relation-lookup {
+  padding: 2rem;
+  max-width: 720px;
+  margin: 0 auto;
+}
+
+.relation-lookup-header h2 {
+  font-family: var(--font-serif);
+  font-size: 1.75rem;
+  margin-bottom: 0.35rem;
+}
+
+.relation-lookup-header p {
+  color: var(--color-text-muted);
+  margin-bottom: 2rem;
+}
+
+.relation-selectors {
+  display: flex;
+  align-items: flex-end;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 2rem;
+}
+
+.relation-selectors label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  flex: 1;
+  min-width: 200px;
+}
+
+.relation-selectors select {
+  font-family: var(--font-sans);
+  font-size: 1rem;
+  padding: 0.6rem 0.85rem;
+  border: 1px solid var(--color-bg-dark);
+  border-radius: 8px;
+  background: var(--color-surface);
+}
+
+.relation-and {
+  color: var(--color-text-muted);
+  font-weight: 500;
+  padding-bottom: 0.65rem;
+}
+
+.relation-result {
+  background: var(--color-surface);
+  border: 1px solid var(--color-bg-dark);
+  border-radius: var(--radius);
+  padding: 1.5rem;
+  box-shadow: var(--shadow);
+}
+
+.relation-names {
+  font-family: var(--font-serif);
+  font-size: 1.25rem;
+  margin-bottom: 0.75rem;
+}
+
+.relation-names span {
+  color: var(--color-text-muted);
+  margin: 0 0.35rem;
+}
+
+.relation-label {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--color-accent);
+  margin-bottom: 0.5rem;
+}
+
+.relation-detail {
+  color: var(--color-text-muted);
+  line-height: 1.6;
+}
+
 /* Tree visualization */
 .tree-container {
   width: 100%;

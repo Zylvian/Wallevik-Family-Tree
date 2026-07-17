@@ -2,6 +2,11 @@ import { useEffect, useRef } from 'react'
 import * as d3 from 'd3'
 import type { Person, TreeNode } from '../types/person'
 import { buildForest } from '../utils/treeBuilder'
+import {
+  computeGenerationMap,
+  getGenerationLabel,
+  getGenerationSubtitle,
+} from '../utils/generationLayout'
 
 interface FamilyTreeProps {
   people: Person[]
@@ -11,9 +16,18 @@ interface FamilyTreeProps {
 
 type HierarchyPerson = Person & { children?: HierarchyPerson[] }
 
+interface LayoutNode {
+  data: Person
+  x: number
+  y: number
+  generation: number
+}
+
 const NODE_RADIUS = 52
-const LEVEL_HEIGHT = 160
+const LEVEL_HEIGHT = 150
+const DIVIDER_HEIGHT = 44
 const SIBLING_GAP = 40
+const ROW_HEIGHT = LEVEL_HEIGHT + DIVIDER_HEIGHT
 
 function toNested(node: TreeNode): HierarchyPerson {
   const result: HierarchyPerson = { ...node.person }
@@ -56,41 +70,102 @@ export function FamilyTree({ people, selectedId, onSelect }: FamilyTreeProps) {
     const forest = buildForest(people)
     if (forest.length === 0) return
 
+    const generationMap = computeGenerationMap(people)
+    const maxGeneration = Math.max(...generationMap.values())
+
     const treeLayout = d3
       .tree<HierarchyPerson>()
-      .nodeSize([NODE_RADIUS * 2 + SIBLING_GAP, LEVEL_HEIGHT])
+      .nodeSize([NODE_RADIUS * 2 + SIBLING_GAP, ROW_HEIGHT])
       .separation((a, b) => (a.parent === b.parent ? 1.2 : 1.5))
 
-    type LayoutNode = d3.HierarchyPointNode<HierarchyPerson>
+    type TreePointNode = d3.HierarchyPointNode<HierarchyPerson>
     const allNodes: LayoutNode[] = []
     const allLinks: { source: LayoutNode; target: LayoutNode }[] = []
+    const nodeById = new Map<string, LayoutNode>()
 
     let xOffset = 0
 
     for (const root of forest) {
-      const layoutRoot = treeLayout(toHierarchy(root)) as LayoutNode
+      const layoutRoot = treeLayout(toHierarchy(root)) as TreePointNode
       const descendants = layoutRoot.descendants()
       const xExtent = d3.extent(descendants, (d) => d.x) as [number, number]
-      const shift = xOffset - xExtent[0] + NODE_RADIUS * 2
+      const shift = xOffset - xExtent[0] + NODE_RADIUS * 2 + 180
 
-      descendants.forEach((d) => {
-        ;(d as LayoutNode).x += shift
-        ;(d as LayoutNode).y += 80
+      const localNodes: LayoutNode[] = descendants.map((d) => {
+        const generation = generationMap.get(d.data.id) ?? 0
+        const node: LayoutNode = {
+          data: d.data,
+          x: d.x + shift,
+          y: 60 + generation * ROW_HEIGHT + LEVEL_HEIGHT / 2,
+          generation,
+        }
+        return node
       })
 
-      allNodes.push(...descendants)
-      allLinks.push(...(layoutRoot.links() as { source: LayoutNode; target: LayoutNode }[]))
-      xOffset += xExtent[1] - xExtent[0] + NODE_RADIUS * 4 + 120
+      localNodes.forEach((n) => nodeById.set(n.data.id, n))
+      allNodes.push(...localNodes)
+
+      layoutRoot.links().forEach((link) => {
+        const source = nodeById.get((link.source as TreePointNode).data.id)
+        const target = nodeById.get((link.target as TreePointNode).data.id)
+        if (source && target) allLinks.push({ source, target })
+      })
+
+      xOffset += xExtent[1] - xExtent[0] + NODE_RADIUS * 4 + 200
     }
 
     const totalWidth = xOffset
-    const maxY = (d3.max(allNodes, (d) => d.y) ?? 0) + NODE_RADIUS * 2
+    const totalHeight = 60 + (maxGeneration + 1) * ROW_HEIGHT + 40
+    const labelX = 24
 
-    // Decorative tree trunks beneath each root subtree
+    const bandsG = g.append('g').attr('class', 'generation-bands')
+    for (let gen = 0; gen <= maxGeneration; gen++) {
+      const bandY = 60 + gen * ROW_HEIGHT - 8
+      const bandHeight = ROW_HEIGHT - 4
+
+      bandsG
+        .append('rect')
+        .attr('class', 'generation-band')
+        .attr('x', 0)
+        .attr('y', bandY)
+        .attr('width', Math.max(totalWidth, width))
+        .attr('height', bandHeight)
+
+      bandsG
+        .append('line')
+        .attr('class', 'generation-divider')
+        .attr('x1', 0)
+        .attr('y1', bandY)
+        .attr('x2', Math.max(totalWidth, width))
+        .attr('y2', bandY)
+
+      if (gen < maxGeneration) {
+        bandsG
+          .append('line')
+          .attr('class', 'generation-divider')
+          .attr('x1', 0)
+          .attr('y1', bandY + bandHeight)
+          .attr('x2', Math.max(totalWidth, width))
+          .attr('y2', bandY + bandHeight)
+      }
+
+      const labelG = bandsG.append('g').attr('transform', `translate(${labelX}, ${bandY + 18})`)
+
+      labelG
+        .append('text')
+        .attr('class', 'generation-label')
+        .text(getGenerationLabel(gen, maxGeneration))
+
+      labelG
+        .append('text')
+        .attr('class', 'generation-sublabel')
+        .attr('y', 18)
+        .text(getGenerationSubtitle(gen))
+    }
+
     const trunkG = g.append('g').attr('class', 'tree-trunks')
     for (const root of forest) {
-      const rootId = root.person.id
-      const subtreeNodes = allNodes.filter((n) => belongsToSubtree(n, rootId))
+      const subtreeNodes = allNodes.filter((n) => isDescendantOf(n.data.id, root.person.id, people))
       if (subtreeNodes.length === 0) continue
 
       const minX = d3.min(subtreeNodes, (d) => d.x) ?? 0
@@ -167,11 +242,7 @@ export function FamilyTree({ people, selectedId, onSelect }: FamilyTreeProps) {
         })
       })
 
-    const initialScale = Math.min(
-      (width - 40) / totalWidth,
-      (height - 40) / maxY,
-      1
-    )
+    const initialScale = Math.min((width - 40) / totalWidth, (height - 40) / totalHeight, 1)
     const initialX = (width - totalWidth * initialScale) / 2
     const initialY = 20
 
@@ -192,16 +263,20 @@ export function FamilyTree({ people, selectedId, onSelect }: FamilyTreeProps) {
   return (
     <div ref={containerRef} className="tree-container">
       <svg ref={svgRef} className="tree-svg" />
-      <div className="zoom-hint">Scroll to zoom · Drag to pan · Click a name for details</div>
+      <div className="zoom-hint">
+        Rows group same-generation relatives · Scroll to zoom · Drag to pan
+      </div>
     </div>
   )
 }
 
-function belongsToSubtree(node: d3.HierarchyPointNode<HierarchyPerson>, rootId: string): boolean {
-  let current: d3.HierarchyPointNode<HierarchyPerson> | null = node
+function isDescendantOf(personId: string, ancestorId: string, people: Person[]): boolean {
+  const byId = new Map(people.map((p) => [p.id, p]))
+  let current: string | null = personId
   while (current) {
-    if (current.data.id === rootId) return true
-    current = current.parent
+    if (current === ancestorId) return true
+    const person = byId.get(current)
+    current = person?.parentId && byId.has(person.parentId) ? person.parentId : null
   }
-  return false
+  return personId === ancestorId
 }
