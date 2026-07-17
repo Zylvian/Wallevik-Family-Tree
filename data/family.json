@@ -1,0 +1,23 @@
+[
+  {
+    "id": "gunnvald-wallevik",
+    "name": "Gunnvald Wallevik",
+    "birthYear": 1925,
+    "deathDate": null,
+    "parentId": null
+  },
+  {
+    "id": "stein-gunnar-wallevik",
+    "name": "Stein Gunnar Wallevik",
+    "birthYear": 1970,
+    "deathDate": null,
+    "parentId": "gunnvald-wallevik"
+  },
+  {
+    "id": "jarle-hjellvik-wallevik",
+    "name": "Jarle Hjellvik Wallevik",
+    "birthYear": 1998,
+    "deathDate": null,
+    "parentId": "stein-gunnar-wallevik"
+  }
+]
