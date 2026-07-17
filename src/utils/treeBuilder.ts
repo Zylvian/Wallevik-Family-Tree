@@ -44,13 +44,6 @@ export function buildForest(people: Person[]): TreeNode[] {
   return roots.map(buildNode)
 }
 
-export function formatLifespan(person: Person): string {
-  if (person.deathDate) {
-    return `${person.birthYear} – ${person.deathDate}`
-  }
-  return `b. ${person.birthYear}`
-}
-
 export function validatePerson(
   input: PersonInput,
   people: Person[],

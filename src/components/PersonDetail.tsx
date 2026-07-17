@@ -1,5 +1,4 @@
 import type { Person } from '../types/person'
-import { formatLifespan } from '../utils/treeBuilder'
 
 interface PersonDetailProps {
   person: Person
@@ -24,8 +23,6 @@ export function PersonDetail({ person, people, onClose, onEdit }: PersonDetailPr
           <dd>{person.birthYear}</dd>
           <dt>Status</dt>
           <dd>{person.deathDate ? `Deceased (${person.deathDate})` : 'Living'}</dd>
-          <dt>Lifespan</dt>
-          <dd>{formatLifespan(person)}</dd>
           <dt>Parent</dt>
           <dd>{parent?.name ?? 'Unknown / not in tree'}</dd>
           {children.length > 0 && (
