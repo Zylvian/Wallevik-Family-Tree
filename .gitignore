@@ -8,11 +8,10 @@ pnpm-debug.log*
 lerna-debug.log*
 
 node_modules
+app/node_modules
 dist
 dist-ssr
 *.local
-
-# docs/ is committed — it contains the built site for GitHub Pages
 
 # Editor directories and files
 .vscode/*
@@ -24,3 +23,9 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Built site artifacts at repo root (committed for GitHub Pages)
+# index.html, assets/, data/, .nojekyll are intentionally tracked
+
+# Legacy deploy folder
+docs/

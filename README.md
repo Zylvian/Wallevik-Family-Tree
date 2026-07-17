@@ -2,16 +2,9 @@
 
 An interactive family tree website that visualizes your lineage as a zoomable, panable tree graph. Each person appears as a named bubble on the tree — click any node to see full details.
 
-## Deployment
-
-The built site lives in `docs/` on `main`. GitHub Actions rebuilds it automatically whenever source files change.
-
-**GitHub Pages settings:**
-1. Go to **Settings → Pages**
-2. Source: **Deploy from a branch**
-3. Branch: **`main`**, folder: **`/docs`**
-
 **Live site:** [https://zylvian.github.io/Wallevik-Family-Tree/](https://zylvian.github.io/Wallevik-Family-Tree/)
+
+## Features
 
 - **Interactive tree graph** — zoom (scroll), pan (drag), and click nodes for details
 - **Literal tree design** — nodes sit on branches above decorative tree trunks
@@ -19,9 +12,13 @@ The built site lives in `docs/` on `main`. GitHub Actions rebuilds it automatica
 - **JSON data model** — flat list of people linked by `parentId`, easy to extend
 - **Export** — download your current data as JSON
 
+## GitHub Pages
+
+Source code lives in `app/`. The built site is committed to the repo root (`index.html`, `assets/`, `data/`) so GitHub Pages can serve it directly from **`main` / `(root)`**.
+
 ## Data format
 
-Each person in `public/data/family.json`:
+Each person in `app/public/data/family.json`:
 
 ```json
 {
@@ -36,6 +33,7 @@ Each person in `public/data/family.json`:
 ## Local development
 
 ```bash
+cd app
 npm install
 npm run dev
 ```
@@ -43,24 +41,13 @@ npm run dev
 ## Build
 
 ```bash
-npm run build   # outputs to docs/
+cd app
+npm run build   # outputs built files to repo root
 ```
 
-## Features
+## Data persistence
 
-Edits made in the browser are saved to `localStorage` so they survive page reloads. Use **Export** to download JSON, then commit the file to update the canonical data in the repo.
-
-### Future database options (free tier)
-
-| Service | Best for | Free tier |
-|---------|----------|-----------|
-| **Supabase** | PostgreSQL with a simple REST API | 500 MB, 50k monthly active users |
-| **Firebase Firestore** | Real-time sync, easy SDK | 1 GB storage, 50k reads/day |
-| **Turso** | Edge SQLite, low latency | 9 GB storage, 500 databases |
-| **Cloudflare D1 + Workers** | Serverless, pairs with Pages | 5 GB, 100k reads/day |
-| **JSON in repo** | Zero cost, version-controlled | Free via GitHub Pages |
-
-For a fully free, zero-maintenance setup: keep JSON in the repo and edit via PRs, or add Supabase later for live editing without commits.
+Edits made in the browser are saved to `localStorage`. Use **Export** to download JSON, then update `app/public/data/family.json` and push to `main`.
 
 ## Tech stack
 
