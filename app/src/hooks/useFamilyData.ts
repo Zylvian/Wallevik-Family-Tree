@@ -4,19 +4,27 @@ import { generateId } from '../utils/treeBuilder'
 
 const STORAGE_KEY = 'wallevik-family-tree-data'
 
-async function loadInitialData(): Promise<Person[]> {
-  const stored = localStorage.getItem(STORAGE_KEY)
-  if (stored) {
-    try {
-      return JSON.parse(stored) as Person[]
-    } catch {
-      localStorage.removeItem(STORAGE_KEY)
-    }
-  }
-
+async function fetchServerData(): Promise<Person[]> {
   const response = await fetch(`${import.meta.env.BASE_URL}data/family.json`)
   if (!response.ok) throw new Error('Failed to load family data')
   return response.json() as Promise<Person[]>
+}
+
+async function loadInitialData(): Promise<Person[]> {
+  const serverData = await fetchServerData()
+
+  const stored = localStorage.getItem(STORAGE_KEY)
+  if (!stored) return serverData
+
+  try {
+    const localData = JSON.parse(stored) as Person[]
+    const serverIds = new Set(serverData.map((p) => p.id))
+    const localOnly = localData.filter((p) => !serverIds.has(p.id))
+    return [...serverData, ...localOnly]
+  } catch {
+    localStorage.removeItem(STORAGE_KEY)
+    return serverData
+  }
 }
 
 export function useFamilyData() {
@@ -69,10 +77,7 @@ export function useFamilyData() {
 
   const resetToFile = useCallback(async () => {
     localStorage.removeItem(STORAGE_KEY)
-    const data = await fetch(`${import.meta.env.BASE_URL}data/family.json`).then((r) =>
-      r.json()
-    ) as Person[]
-    setPeople(data)
+    setPeople(await fetchServerData())
   }, [])
 
   const exportJson = useCallback(() => {
