@@ -277,23 +277,97 @@ body {
   margin-bottom: 2rem;
 }
 
-.relation-selectors label {
+.person-search {
   display: flex;
   flex-direction: column;
   gap: 0.35rem;
-  font-size: 0.875rem;
-  font-weight: 500;
   flex: 1;
-  min-width: 200px;
+  min-width: 220px;
+  position: relative;
 }
 
-.relation-selectors select {
+.person-search-label {
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.person-search-field {
+  position: relative;
+}
+
+.person-search-field input {
+  width: 100%;
   font-family: var(--font-sans);
   font-size: 1rem;
   padding: 0.6rem 0.85rem;
   border: 1px solid var(--color-bg-dark);
   border-radius: 8px;
   background: var(--color-surface);
+  color: var(--color-text);
+}
+
+.person-search-field input:focus {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 1px;
+}
+
+.person-search-list {
+  position: absolute;
+  z-index: 20;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  margin: 0;
+  padding: 0.35rem;
+  list-style: none;
+  background: var(--color-surface);
+  border: 1px solid var(--color-bg-dark);
+  border-radius: 8px;
+  box-shadow: var(--shadow);
+  max-height: 240px;
+  overflow-y: auto;
+}
+
+.person-search-empty {
+  padding: 0.65rem 0.75rem;
+  color: var(--color-text-muted);
+  font-size: 0.875rem;
+}
+
+.person-search-option {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.55rem 0.75rem;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  cursor: pointer;
+  text-align: left;
+  font-family: var(--font-sans);
+  color: var(--color-text);
+}
+
+.person-search-option:hover,
+.person-search-option.highlighted {
+  background: var(--color-bg);
+}
+
+.person-search-option.selected {
+  background: rgba(45, 90, 61, 0.12);
+}
+
+.person-search-name {
+  font-weight: 500;
+  font-size: 0.95rem;
+}
+
+.person-search-year {
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+  flex-shrink: 0;
 }
 
 .relation-is,

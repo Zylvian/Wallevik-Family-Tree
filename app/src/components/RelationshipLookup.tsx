@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import type { Person } from '../types/person'
 import { getRelationship } from '../utils/relationship'
+import { PersonSearch } from './PersonSearch'
 
 interface RelationshipLookupProps {
   people: Person[]
@@ -27,33 +28,28 @@ export function RelationshipLookup({ people }: RelationshipLookupProps) {
         <h2>Relationship lookup</h2>
         <p>
           Order matters: the first person is described relative to the second — “X is Y's …”
+          Search by name to find people quickly.
         </p>
       </div>
 
       <div className="relation-selectors">
-        <label>
-          Person X
-          <select value={personAId} onChange={(e) => setPersonAId(e.target.value)}>
-            {sorted.map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.name} (b. {p.birthYear})
-              </option>
-            ))}
-          </select>
-        </label>
+        <PersonSearch
+          label="Person X"
+          people={people}
+          value={personAId}
+          onChange={setPersonAId}
+          placeholder="Search person X…"
+        />
 
         <span className="relation-is">is</span>
 
-        <label>
-          Person Y
-          <select value={personBId} onChange={(e) => setPersonBId(e.target.value)}>
-            {sorted.map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.name} (b. {p.birthYear})
-              </option>
-            ))}
-          </select>
-        </label>
+        <PersonSearch
+          label="Person Y"
+          people={people}
+          value={personBId}
+          onChange={setPersonBId}
+          placeholder="Search person Y…"
+        />
 
         <span className="relation-possessive">'s …</span>
       </div>
