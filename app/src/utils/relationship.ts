@@ -27,24 +27,29 @@ function greatPrefix(count: number): string {
   return `Great-${'great-'.repeat(count - 1)}`
 }
 
-function linealUpLabel(steps: number): string {
-  if (steps === 1) return 'Parent'
-  if (steps === 2) return 'Grandparent'
-  return `${greatPrefix(steps - 2)}grandparent`
+function linealUpRole(steps: number): string {
+  if (steps === 1) return 'parent'
+  if (steps === 2) return 'grandparent'
+  return `${greatPrefix(steps - 2)}grandparent`.toLowerCase()
 }
 
-function linealDownLabel(steps: number): string {
-  if (steps === 1) return 'Child'
-  if (steps === 2) return 'Grandchild'
-  return `${greatPrefix(steps - 2)}grandchild`
+function linealDownRole(steps: number): string {
+  if (steps === 1) return 'child'
+  if (steps === 2) return 'grandchild'
+  return `${greatPrefix(steps - 2)}grandchild`.toLowerCase()
 }
 
-function auntUncleLabel(greatness: number): string {
-  if (greatness === 0) return 'Aunt / Uncle'
-  return `${greatPrefix(greatness)}aunt / ${greatPrefix(greatness)}uncle`
+function auntUncleRole(greatness: number): string {
+  if (greatness === 0) return 'aunt / uncle'
+  return `${greatPrefix(greatness)}aunt / ${greatPrefix(greatness)}uncle`.toLowerCase()
 }
 
-function cousinLabel(degree: number, removal: number): string {
+function nieceNephewRole(greatness: number): string {
+  if (greatness === 0) return 'niece / nephew'
+  return `${greatPrefix(greatness)}niece / ${greatPrefix(greatness)}nephew`.toLowerCase()
+}
+
+function cousinRole(degree: number, removal: number): string {
   const ordinal =
     degree === 1 ? '1st' : degree === 2 ? '2nd' : degree === 3 ? '3rd' : `${degree}th`
   const base = `${ordinal} cousin`
@@ -54,7 +59,6 @@ function cousinLabel(degree: number, removal: number): string {
   return `${base} ${removal} times removed`
 }
 
-/** If `candidate` is aunt/uncle of `person`, return greatness (0 = aunt, 1 = great-aunt, …). */
 function auntUncleGreatness(
   candidate: Person,
   person: Person,
@@ -108,86 +112,104 @@ function findLowestCommonAncestor(
 }
 
 export interface RelationshipResult {
-  label: string
+  /** What person A is to person B — used in “A is B's …” */
+  role: string
   detail: string
 }
 
+/**
+ * Describes what `personA` is to `personB` (order matters).
+ * Example: Heidi → Jarle gives role "aunt / uncle".
+ */
 export function getRelationship(
   personA: Person,
   personB: Person,
   people: Person[]
 ): RelationshipResult {
   if (personA.id === personB.id) {
-    return { label: 'Same person', detail: `${personA.name} is the same person.` }
+    return {
+      role: 'same person',
+      detail: 'Choose two different people to compare.',
+    }
   }
 
   const byId = new Map(people.map((p) => [p.id, p]))
 
-  const stepsDown = generationsAbove(personB, personA, byId)
-  if (stepsDown > 0) {
-    const label = linealUpLabel(stepsDown)
+  const aIsAncestorOfB = generationsAbove(personB, personA, byId)
+  if (aIsAncestorOfB > 0) {
+    const role = linealUpRole(aIsAncestorOfB)
     return {
-      label,
-      detail: `${personA.name} is the ${label.toLowerCase()} of ${personB.name}.`,
+      role,
+      detail: `They share a direct line through ${personA.name}, ${aIsAncestorOfB} generation${
+        aIsAncestorOfB > 1 ? 's' : ''
+      } above ${personB.name}.`,
     }
   }
 
-  const stepsUp = generationsAbove(personA, personB, byId)
-  if (stepsUp > 0) {
-    const label = linealDownLabel(stepsUp)
+  const aIsDescendantOfB = generationsAbove(personA, personB, byId)
+  if (aIsDescendantOfB > 0) {
+    const role = linealDownRole(aIsDescendantOfB)
     return {
-      label,
-      detail: `${personA.name} is the ${label.toLowerCase()} of ${personB.name}.`,
+      role,
+      detail: `They share a direct line through ${personB.name}, ${aIsDescendantOfB} generation${
+        aIsDescendantOfB > 1 ? 's' : ''
+      } below ${personB.name}.`,
     }
   }
 
   if (areSiblings(personA, personB)) {
     const parent = personA.parentId ? byId.get(personA.parentId) : null
     return {
-      label: 'Sibling',
+      role: 'sibling',
       detail: parent
-        ? `${personA.name} and ${personB.name} are siblings through ${parent.name}.`
-        : `${personA.name} and ${personB.name} are siblings.`,
+        ? `They share a parent: ${parent.name}.`
+        : 'They share the same parent in the tree.',
     }
   }
 
-  const aAuntOfB = auntUncleGreatness(personA, personB, byId)
-  if (aAuntOfB !== null) {
-    const label = auntUncleLabel(aAuntOfB)
+  const aIsAuntUncleOfB = auntUncleGreatness(personA, personB, byId)
+  if (aIsAuntUncleOfB !== null) {
+    const role = auntUncleRole(aIsAuntUncleOfB)
+    const parent = getParent(personB, byId)
     return {
-      label,
-      detail: `${personA.name} is the ${label.toLowerCase()} of ${personB.name}.`,
+      role,
+      detail: parent
+        ? `${personA.name} is a sibling of ${personB.name}'s parent, ${parent.name}.`
+        : `${personA.name} is on the parent's generation relative to ${personB.name}.`,
     }
   }
 
-  const bAuntOfA = auntUncleGreatness(personB, personA, byId)
-  if (bAuntOfA !== null) {
-    const label = auntUncleLabel(bAuntOfA)
+  const bIsAuntUncleOfA = auntUncleGreatness(personB, personA, byId)
+  if (bIsAuntUncleOfA !== null) {
+    const role = nieceNephewRole(bIsAuntUncleOfA)
+    const parent = getParent(personA, byId)
     return {
-      label,
-      detail: `${personB.name} is the ${label.toLowerCase()} of ${personA.name}.`,
+      role,
+      detail: parent
+        ? `${personB.name} is a sibling of ${personA.name}'s parent, ${parent.name}.`
+        : `${personB.name} is on the parent's generation relative to ${personA.name}.`,
     }
   }
 
   const lcaResult = findLowestCommonAncestor(personA, personB, byId)
   if (!lcaResult) {
     return {
-      label: 'Not related',
-      detail: 'No shared ancestor was found in this family tree.',
+      role: 'not related',
+      detail: 'No shared ancestor appears in this family tree.',
     }
   }
 
   const { lca, stepsA, stepsB } = lcaResult
   const degree = Math.min(stepsA, stepsB) - 1
   const removal = Math.abs(stepsA - stepsB)
-  const label = cousinLabel(degree, removal)
+  const role = cousinRole(degree, removal)
   const shared =
-    stepsA === 2 && stepsB === 2
+    Math.min(stepsA, stepsB) === 2
       ? 'grandparent'
       : `${greatPrefix(Math.min(stepsA, stepsB) - 2)}grandparent`.toLowerCase()
 
   return {
-    label,
-    detail: `${personA.name} and ${personB.name} are ${label} through ${lca.name} (${shared}).`,
+    role,
+    detail: `They are related through ${lca.name} (${shared}).`,
   }
 }

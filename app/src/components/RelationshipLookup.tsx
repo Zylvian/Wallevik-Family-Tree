@@ -25,12 +25,14 @@ export function RelationshipLookup({ people }: RelationshipLookupProps) {
     <div className="relation-lookup">
       <div className="relation-lookup-header">
         <h2>Relationship lookup</h2>
-        <p>Choose two people to see how they are related.</p>
+        <p>
+          Order matters: the first person is described relative to the second — “X is Y's …”
+        </p>
       </div>
 
       <div className="relation-selectors">
         <label>
-          Person A
+          Person X
           <select value={personAId} onChange={(e) => setPersonAId(e.target.value)}>
             {sorted.map((p) => (
               <option key={p.id} value={p.id}>
@@ -40,10 +42,10 @@ export function RelationshipLookup({ people }: RelationshipLookupProps) {
           </select>
         </label>
 
-        <span className="relation-and">and</span>
+        <span className="relation-is">is</span>
 
         <label>
-          Person B
+          Person Y
           <select value={personBId} onChange={(e) => setPersonBId(e.target.value)}>
             {sorted.map((p) => (
               <option key={p.id} value={p.id}>
@@ -52,16 +54,24 @@ export function RelationshipLookup({ people }: RelationshipLookupProps) {
             ))}
           </select>
         </label>
+
+        <span className="relation-possessive">'s …</span>
       </div>
 
-      {result && personA && personB && (
+      {result && personA && personB && personA.id !== personB.id && (
         <div className="relation-result">
-          <p className="relation-names">
-            {personA.name} <span>↔</span> {personB.name}
+          <p className="relation-sentence">
+            <span className="relation-person">{personA.name}</span>
+            <span className="relation-is-inline"> is </span>
+            <span className="relation-person">{personB.name}'s</span>
           </p>
-          <p className="relation-label">{result.label}</p>
+          <p className="relation-role">{result.role}</p>
           <p className="relation-detail">{result.detail}</p>
         </div>
+      )}
+
+      {result && personA && personB && personA.id === personB.id && (
+        <p className="relation-detail">Choose two different people.</p>
       )}
     </div>
   )
